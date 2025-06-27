@@ -43,3 +43,30 @@ decode_base64 :: proc(bytes: []byte) -> ([dynamic]u8, Error) {
 
 	return sb.buf, nil
 }
+
+// TODO: Add a special case for the last 4 bytes, to handle '=' padding
+// Make sure to handle missing '=' padding aswell.
+decode_base64_fast :: proc(bytes: []byte) -> ([dynamic]u8, Error) {
+	assert(len(bytes) % 4 == 0)
+	
+	sb: strings.Builder
+	strings.builder_init_len_cap(&sb, 0, len(bytes) * (3 / 4))
+	
+	for i := 0; i < len(bytes); i += 4 {
+		idx0 := strings.index_byte(BASE64_LOOKUP_TABLE, bytes[i+0])
+		idx1 := strings.index_byte(BASE64_LOOKUP_TABLE, bytes[i+1])
+		idx2 := strings.index_byte(BASE64_LOOKUP_TABLE, bytes[i+2])
+		idx3 := strings.index_byte(BASE64_LOOKUP_TABLE, bytes[i+3])
+		
+		if (idx0 | idx1 | idx2 | idx3) < 0 {
+			break
+		}
+		
+		b1: u8 = (u8(idx0) << 2) | (u8(idx1) >> 4)
+		b2: u8 = (u8(idx1) << 4) | (u8(idx2) >> 2)
+		b3: u8 = (u8(idx2) << 6) | u8(idx3)
+		strings.write_bytes(&sb, {b1, b2, b3})
+	}
+	
+	return sb.buf, nil
+}

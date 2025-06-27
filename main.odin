@@ -9,7 +9,8 @@ main :: proc() {
 
 	dd := transmute([]u8)data[:]
 	fmt.printfln("%s", dd)
-	d, err := decoding.decode_base64(dd)
+	//d, err := decoding.decode_base64(dd)
+	d, err := decoding.decode_base64_fast(dd)
 
 	fmt.println(err)
 /*	for b in d {

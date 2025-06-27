@@ -69,4 +69,13 @@ benchmark :: proc(t: ^testing.T) {
     }
     base64Avg := time.duration_microseconds(time.since(start)) / f64(base64Count)
     log.info("Base64 avg:", base64Avg, "microseconds")
+
+    start = time.now()
+    base64FastCount := 100000
+    for i := 0; i < base64FastCount; i += 1 {
+        d, _ := decode_base64_fast(transmute([]u8)data)
+        delete_dynamic_bytes(&d)
+    }
+    base64FastAvg := time.duration_microseconds(time.since(start)) / f64(base64FastCount)
+    log.info("Base64fast avg:", base64FastAvg, "microseconds")
 }
