@@ -71,11 +71,29 @@ benchmark :: proc(t: ^testing.T) {
     log.info("Base64 avg:", base64Avg, "microseconds")
 
     start = time.now()
-    base64FastCount := 100000
-    for i := 0; i < base64FastCount; i += 1 {
-        d, _ := decode_base64_fast(transmute([]u8)data)
+    base64Fast1Count := 100000
+    for i := 0; i < base64Fast1Count; i += 1 {
+        d, _ := decode_base64_fast1(transmute([]u8)data)
         delete_dynamic_bytes(&d)
     }
-    base64FastAvg := time.duration_microseconds(time.since(start)) / f64(base64FastCount)
-    log.info("Base64fast avg:", base64FastAvg, "microseconds")
+    base64Fast1Avg := time.duration_microseconds(time.since(start)) / f64(base64Fast1Count)
+    log.info("Base64fast1 avg:", base64Fast1Avg, "microseconds")
+
+    start = time.now()
+    base64Fast2Count := 100000
+    for i := 0; i < base64Fast2Count; i += 1 {
+        d, _ := decode_base64_fast2(transmute([]u8)data)
+        delete_dynamic_bytes(&d)
+    }
+    base64Fast2Avg := time.duration_microseconds(time.since(start)) / f64(base64Fast2Count)
+    log.info("Base64fast2 avg:", base64Fast2Avg, "microseconds")
+
+    start = time.now()
+    base64Fast3Count := 100000
+    for i := 0; i < base64Fast3Count; i += 1 {
+        d, _ := decode_base64_fast3(transmute([]u8)data)
+        delete_dynamic_bytes(&d)
+    }
+    base64Fast3Avg := time.duration_microseconds(time.since(start)) / f64(base64Fast3Count)
+    log.info("Base64fast3 avg:", base64Fast3Avg, "microseconds")
 }

@@ -5,6 +5,25 @@ import "core:strings"
 
 BASE64_LOOKUP_TABLE :: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
 
+b64_to_index :: proc(b: u8) -> int {
+	if b >= 'A' && b <= 'Z' {
+		return int(b - 'A')
+	}
+	
+	if b >= 'a' && b <= 'z' {
+		return int(b - 'a' + 26)
+	}
+	
+	if b >= '0' && b <= '9' {
+		return int(b - '0' + 52)
+	}
+	
+	if b == '+' do return 62
+	if b == '/' do return 63
+
+	return -1
+}
+
 // Remember to call decoding.delete_dynamic_bytes() on the return value!
 // This implementation ignores the '=' character, to avoid returning .Partial_Decode on '=' padded base64.
 decode_base64 :: proc(bytes: []byte) -> ([dynamic]u8, Error) {
@@ -46,7 +65,7 @@ decode_base64 :: proc(bytes: []byte) -> ([dynamic]u8, Error) {
 
 // TODO: Add a special case for the last 4 bytes, to handle '=' padding
 // Make sure to handle missing '=' padding aswell.
-decode_base64_fast :: proc(bytes: []byte) -> ([dynamic]u8, Error) {
+decode_base64_fast1 :: proc(bytes: []byte) -> ([dynamic]u8, Error) {
 	assert(len(bytes) % 4 == 0)
 	
 	sb: strings.Builder
@@ -68,5 +87,51 @@ decode_base64_fast :: proc(bytes: []byte) -> ([dynamic]u8, Error) {
 		strings.write_bytes(&sb, {b1, b2, b3})
 	}
 	
+	return sb.buf, nil
+}
+
+// TODO: Add a special case for the last 4 bytes, to handle '=' padding
+// Make sure to handle missing '=' padding aswell.
+decode_base64_fast2 :: proc(bytes: []byte) -> ([dynamic]u8, Error) {
+	assert(len(bytes) % 4 == 0)
+
+	sb: strings.Builder
+	strings.builder_init_len_cap(&sb, 0, len(bytes) * (3 / 4))
+
+	for i := 0; i < len(bytes); i += 4 {
+		idx0 := b64_to_index(bytes[i+0])
+		idx1 := b64_to_index(bytes[i+1])
+		idx2 := b64_to_index(bytes[i+2])
+		idx3 := b64_to_index(bytes[i+3])
+
+		/*if (idx0 | idx1 | idx2 | idx3) < 0 {
+			break
+		}*/
+
+		b1: u8 = (u8(idx0) << 2) | (u8(idx1) >> 4)
+		b2: u8 = (u8(idx1) << 4) | (u8(idx2) >> 2)
+		b3: u8 = (u8(idx2) << 6) | u8(idx3)
+		strings.write_bytes(&sb, {b1, b2, b3})
+	}
+
+	return sb.buf, nil
+}
+
+// TODO: Add a special case for the last 4 bytes, to handle '=' padding
+// Make sure to handle missing '=' padding aswell.
+decode_base64_fast3 :: proc(bytes: []byte) -> ([dynamic]u8, Error) {
+	assert(len(bytes) % 4 == 0)
+
+	sb: strings.Builder
+	strings.builder_init_len_cap(&sb, 0, len(bytes) * (3 / 4))
+
+	for i := 0; i < len(bytes); i += 4 {
+		n := b64_to_index(bytes[i+0]) << 18 | b64_to_index(bytes[i+1]) << 12 | b64_to_index(bytes[i+2]) << 6 | b64_to_index(bytes[i+3])
+		b1: u8 = u8(n >> 16)
+		b2: u8 = u8(n >> 8)
+		b3: u8 = u8(n >> 0)
+		strings.write_bytes(&sb, {b1, b2, b3})
+	}
+
 	return sb.buf, nil
 }
