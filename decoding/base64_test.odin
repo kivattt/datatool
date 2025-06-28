@@ -102,7 +102,7 @@ benchmark :: proc(t: ^testing.T) {
     }
     base64Fast4Avg := time.duration_microseconds(time.since(start)) / f64(base64Count)
     log.info("Base64fast4 avg:", base64Fast4Avg, "microseconds")
-    
+
     lt := new_lookup_table()
     start = time.now()
     for i := 0; i < base64Count; i += 1 {
@@ -111,6 +111,14 @@ benchmark :: proc(t: ^testing.T) {
     }
     base64Fast5Avg := time.duration_microseconds(time.since(start)) / f64(base64Count)
     log.info("Base64fast5 avg:", base64Fast5Avg, "microseconds")
+
+    start = time.now()
+    for i := 0; i < base64Count; i += 1 {
+        d, _ := decode_base64_fast6(transmute([]u8)data)
+        delete_dynamic_bytes(&d)
+    }
+    base64Fast6Avg := time.duration_microseconds(time.since(start)) / f64(base64Count)
+    log.info("Base64fast6 avg:", base64Fast6Avg, "microseconds")
     
-    time.sleep(10000 * time.Second)
+    //time.sleep(10000 * time.Second)
 }

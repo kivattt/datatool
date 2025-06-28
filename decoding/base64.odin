@@ -33,6 +33,23 @@ b64_to_index :: proc(b: u8) -> int {
 	return -1
 }
 
+b64_to_index2 :: proc(b: u8) -> int {
+	switch b {
+		case 'A'..='Z':
+			return int(b - 'A')
+		case 'a'..='z':
+			return int(b - 'a' + 26)
+		case '0'..='9':
+			return int(b - '0' + 52)
+		case '+':
+			return 62
+		case '/':
+			return 63
+	}
+	
+	return -1
+}
+
 // Remember to call decoding.delete_dynamic_bytes() on the return value!
 // This implementation ignores the '=' character, to avoid returning .Partial_Decode on '=' padded base64.
 decode_base64 :: proc(bytes: []byte) -> ([dynamic]u8, Error) {
@@ -190,6 +207,34 @@ decode_base64_fast5 :: proc(lt: ^[256]int, bytes: []byte) -> ([dynamic]u8, Error
 			i1 := lt[bytes[i+1]]
 			i2 := lt[bytes[i+2]]
 			i3 := lt[bytes[i+3]]
+
+			if (i0 | i1 | i2 | i3) < 0 {
+				break
+			}
+
+			n: u32 = u32(i0 << 26 | i1 << 20 | i2 << 14 | i3 << 8);
+			n = intrinsics.byte_swap(n)
+			strings.write_string(&sb, strings.string_from_ptr(transmute(^u8)&n, 3))
+		}
+	}
+
+	return sb.buf, nil
+}
+
+// TODO: Add a special case for the last 4 bytes, to handle '=' padding
+// Make sure to handle missing '=' padding aswell.
+decode_base64_fast6 :: proc(bytes: []byte) -> ([dynamic]u8, Error) {
+	assert(len(bytes) % 4 == 0)
+
+	sb: strings.Builder
+	strings.builder_init_len_cap(&sb, 0, len(bytes) * (3 / 4))
+
+	for i := 0; i < len(bytes); i += 4 {
+		#no_bounds_check {
+			i0 := b64_to_index2(bytes[i+0])
+			i1 := b64_to_index2(bytes[i+1])
+			i2 := b64_to_index2(bytes[i+2])
+			i3 := b64_to_index2(bytes[i+3])
 
 			if (i0 | i1 | i2 | i3) < 0 {
 				break
