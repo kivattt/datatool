@@ -3,22 +3,29 @@ package main
 import "core:fmt"
 import "core:strings"
 import "decoding"
+import time "core:time"
 
 main :: proc() {
-	/*data := "aGVsbG8gd29ybGQhIHhE"
+/*	data := "aGVsbG8gd29ybGQhIHhE"
 
 	dd := transmute([]u8)data[:]
 	fmt.printfln("%s", dd)
-	d, err := decoding.decode_base64_fast(dd)
+	lt := decoding.new_lookup_table()
+	d, err := decoding.decode_base64_fast5(&lt, dd)
 
 	fmt.println(err)
 	fmt.printfln("%s", d)*/
 
+	lt := decoding.new_lookup_table()
+	
+	start := time.now()
 	data := "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6PkJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v8PHy8/T19vf4+fr7/P3+/w=="
-	base64FastCount := 100000
+	base64FastCount := 1000000
 	for i := 0; i < base64FastCount; i += 1 {
-		d, _ := decoding.decode_base64_fast(transmute([]u8)data)
+		//d, _ := decoding.decode_base64_fast4(transmute([]u8)data)
+		d, _ := decoding.decode_base64_fast5(&lt, transmute([]u8)data)
+		//d, _ := decoding.decode_base64(transmute([]u8)data)
 		decoding.delete_dynamic_bytes(&d)
 	}
-	fmt.println("hi")
+	fmt.println("time spent:", time.duration_milliseconds(time.since(start)), " milliseconds")
 }
