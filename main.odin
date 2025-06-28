@@ -10,8 +10,8 @@ main :: proc() {
 
 	dd := transmute([]u8)data[:]
 	fmt.printfln("%s", dd)
-	lt := decoding.new_lookup_table()
-	d, err := decoding.decode_base64_fast5(&lt, dd)
+	lt := decoding.base64.new_lookup_table()
+	d, err := decoding.base64.decode(&lt, dd)
 
 	fmt.println(err)
 	fmt.printfln("%s", d)
