@@ -33,20 +33,43 @@ test_decode_base64 :: proc(t: ^testing.T) {
         break
     }
     delete_dynamic_bytes(&d)
-
-    // We ignore '=' characters, even when it is technically invalid base64.
+    
+    // Invalid character
     data = "====a====G====V==s=b=G=8gd==29ybGQh===="
     d, err = base64_decode(&lt, transmute([]u8)data)
-    testing.expect_value(t, err, Error.None)
-    testing.expect_value(t, string(d[:]), "hello world!")
+    testing.expect_value(t, err, Error.Failed)
+    testing.expect_value(t, string(d[:]), "")
     delete_dynamic_bytes(&d)
 
     // Invalid character
     data = ")))))))aGkgaGVsbG8="
     d, err = base64_decode(&lt, transmute([]u8)data)
     testing.expect_value(t, err, Error.Failed)
-    fmt.println(d)
-    //testing.expect_value(t, &d, nil)
+    testing.expect_value(t, string(d[:]), "")
+    delete_dynamic_bytes(&d)
+    
+    data = "YQ=="
+    d, err = base64_decode(&lt, transmute([]u8)data)
+    testing.expect_value(t, err, Error.None)
+    testing.expect_value(t, string(d[:]), "a")
+    delete_dynamic_bytes(&d)
+
+    data = "YR=="
+    d, err = base64_decode(&lt, transmute([]u8)data)
+    testing.expect_value(t, err, Error.None_But_Nonstandard)
+    testing.expect_value(t, string(d[:]), "a")
+    delete_dynamic_bytes(&d)
+
+    data = ""
+    d, err = base64_decode(&lt, transmute([]u8)data)
+    testing.expect_value(t, err, Error.Failed)
+    testing.expect_value(t, string(d[:]), "")
+    delete_dynamic_bytes(&d)
+    
+    data = "aGkgaGVsbG8="
+    d, err = base64_decode(&lt, transmute([]u8)data)
+    testing.expect_value(t, err, Error.None)
+    testing.expect_value(t, string(d[:]), "hi hello")
     delete_dynamic_bytes(&d)
 }
 

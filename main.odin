@@ -6,12 +6,14 @@ import "decoding"
 import time "core:time"
 
 main :: proc() {
-	data := "aGVsbG8gd29ybGQhIHhE"
+	//data := "aGVsbG8gd29ybGQhIHhE"
+	data := "YR=="
+	//data := ""
 
 	dd := transmute([]u8)data[:]
 	fmt.printfln("%s", dd)
-	lt := decoding.base64.new_lookup_table()
-	d, err := decoding.base64.decode(&lt, dd)
+	lt := decoding.base64_new_lookup_table()
+	d, err := decoding.base64_decode(&lt, dd)
 
 	fmt.println(err)
 	fmt.printfln("%s", d)
