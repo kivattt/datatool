@@ -3,6 +3,7 @@ package decoding
 import "core:testing"
 import "core:time"
 import "core:log"
+import "core:strings"
 
 @(test)
 hex_test :: proc(t: ^testing.T) {
@@ -51,6 +52,26 @@ hex_test :: proc(t: ^testing.T) {
     testing.expect_value(t, err, Error.Partial_Decode)
     testing.expect_value(t, string(d[:]), "\xff")
     delete_dynamic_bytes(&d)
+    
+    // Make sure it only accepts valid characters
+    dataMutable: strings.Builder
+    strings.builder_init(&dataMutable)
+    strings.write_string(&dataMutable, "66656e6e656373")
+    defer strings.builder_destroy(&dataMutable)
+    for i := 0; i < 256; i += 1 {
+        byte := u8(i)
+        
+        dataMutable.buf[0] = byte
+        
+        d, err = hex_decode(dataMutable.buf[:])
+        if hex_to_index(byte) == -1 {
+            testing.expect_value(t, err, Error.Failed)
+        } else {
+            testing.expect_value(t, err, Error.None)
+        }
+        
+        delete_dynamic_bytes(&d)
+    }
 }
 
 @(test)

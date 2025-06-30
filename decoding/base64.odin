@@ -62,13 +62,13 @@ base64_decode :: proc(lt: ^[256]int, bytes: []byte) -> ([dynamic]u8, Error) {
 	}
 
 	// Last n <= 4 bytes
-	length := min(4, len(bytes) - i)
+	remaining := min(4, len(bytes) - i)
 	
 	partial := false
 	notPartial := false
 	buffer: u8 = 0
 	nBitsUntilByte: u8 = 0
-	for j := 0; j < length; j += 1 {
+	for j := 0; j < remaining; j += 1 {
 		byte := bytes[i + j]
 		index := lt[byte]
 		if index < 0 {
