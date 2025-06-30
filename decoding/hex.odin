@@ -6,6 +6,8 @@ import "core:strings"
 import "core:simd"
 import slice "core:slice"
 
+BYTES_PER_ITERATION :: 16
+
 @(private)
 hex_to_index :: proc(b: u8) -> int {
     switch b {
@@ -26,8 +28,8 @@ hex_decode :: proc(bytes: []byte) -> ([dynamic]u8, Error) {
     strings.builder_init_len_cap(&sb, 0, length / 2)
     
     i: int
-    for i = 0; i < length - 16; i += 16 {
-        data := simd.from_slice(#simd[16]u8, slice.from_ptr(&bytes[i], 16))
+    for i = 0; i < length - BYTES_PER_ITERATION; i += BYTES_PER_ITERATION {
+        data := simd.from_slice(#simd[BYTES_PER_ITERATION]u8, slice.from_ptr(&bytes[i], BYTES_PER_ITERATION))
 
         // TODO: Look into simd.clamp() or min + max functions
 
@@ -58,12 +60,12 @@ hex_decode :: proc(bytes: []byte) -> ([dynamic]u8, Error) {
 
         result := simd.bit_or(left, right)
         
-        resize(&sb.buf, len(sb.buf) + 8)
-        simd.masked_store(&sb.buf[len(sb.buf) - 8], result, #simd[8]bool{true, true, true, true, true, true, true, true})
+        resize(&sb.buf, len(sb.buf) + BYTES_PER_ITERATION/2)
+        simd.masked_store(&sb.buf[len(sb.buf) - BYTES_PER_ITERATION/2], result, #simd[BYTES_PER_ITERATION/2]bool{true, true, true, true, true, true, true, true})
     }
 
     // Last n <= 16 bytes
-    remaining := min(16, length - i)
+    remaining := min(BYTES_PER_ITERATION, length - i)
     
     for j := 0; j < remaining; j += 2 {
         a := hex_to_index(bytes[j+i + 0])
