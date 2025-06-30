@@ -7,13 +7,12 @@ import time "core:time"
 
 main :: proc() {
 	//data := "aGVsbG8gd29ybGQhIHhE"
-	data := "YR=="
-	//data := ""
+	data := "68656c6c6f20776f726c6421"
 
 	dd := transmute([]u8)data[:]
 	fmt.printfln("%s", dd)
-	lt := decoding.base64_new_lookup_table()
-	d, err := decoding.base64_decode(&lt, dd)
+	//lt := decoding.base64_new_lookup_table()
+	d, err := decoding.hex_decode(dd)
 
 	fmt.println(err)
 	fmt.printfln("%s", d)

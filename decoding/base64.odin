@@ -4,6 +4,9 @@ import "core:fmt"
 import "core:strings"
 import "base:intrinsics"
 
+// TODO: Read through https://datatracker.ietf.org/doc/html/rfc4648.html
+
+// FIXME: Don't do this at runtime...
 base64_new_lookup_table :: proc() -> [256]int {
 	out: [256]int
 	for i := 0; i < 256; i += 1 {
