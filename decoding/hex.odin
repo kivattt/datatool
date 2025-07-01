@@ -4,6 +4,7 @@ package decoding
 
 import "core:strings"
 import "core:simd"
+import "base:intrinsics"
 import slice "core:slice"
 
 BYTES_PER_ITERATION :: 16
@@ -65,7 +66,7 @@ hex_decode :: proc(bytes: []byte) -> ([dynamic]u8, Error) {
         
         #no_bounds_check {
             resize(&sb.buf, len(sb.buf) + BYTES_PER_ITERATION/2)
-            simd.masked_store(&sb.buf[len(sb.buf) - BYTES_PER_ITERATION/2], result, #simd[BYTES_PER_ITERATION/2]bool{true, true, true, true, true, true, true, true})
+            intrinsics.unaligned_store(cast(^#simd[8]u8)&sb.buf[len(sb.buf) - BYTES_PER_ITERATION/2], result)
         }
     }
 
