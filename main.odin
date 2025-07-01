@@ -11,11 +11,15 @@ main :: proc() {
 
 	dd := transmute([]u8)data[:]
 	fmt.printfln("%s", dd)
-	//lt := decoding.base64_new_lookup_table()
-	d, err := decoding.hex_decode(dd)
+	lt := decoding.base64_new_lookup_table()
+	d1, err1 := decoding.hex_decode(dd)
+	d2, err2 := decoding.base64_decode(&lt, dd)
 
-	fmt.println(err)
-	fmt.printfln("%s", d)
+	//fmt.println(err)
+	fmt.print(err1)
+	fmt.printfln(" %s", d1)
+	fmt.print(err2)
+	fmt.printfln(" %s", d2)
 
 	/*lt := decoding.new_lookup_table()
 	

@@ -28,9 +28,13 @@ hex_decode :: proc(bytes: []byte) -> ([dynamic]u8, Error) {
     strings.builder_init_len_cap(&sb, 0, length / 2)
     
     i: int
+    data: #simd[BYTES_PER_ITERATION]u8
     for i = 0; i < length - BYTES_PER_ITERATION; i += BYTES_PER_ITERATION {
-        data := simd.from_slice(#simd[BYTES_PER_ITERATION]u8, slice.from_ptr(&bytes[i], BYTES_PER_ITERATION))
-
+        #no_bounds_check {
+            data = simd.from_slice(#simd[BYTES_PER_ITERATION]u8, slice.from_ptr(&bytes[i], BYTES_PER_ITERATION))
+        }
+        data = simd.bit_or(data, 0b00100000) // Case-insensitive
+        
         // TODO: Look into simd.clamp() or min + max functions
 
         // '0' through '9'
@@ -39,29 +43,30 @@ hex_decode :: proc(bytes: []byte) -> ([dynamic]u8, Error) {
         a = simd.bit_and(a, aMask)
 
         // 'a' through 'f', case-insensitive
-        bInsensitive := simd.bit_or(data, 0b00100000)
-        b := simd.saturating_sub(bInsensitive, 96)
+        b := simd.saturating_sub(data, 96)
         bMask := simd.lanes_lt(b, 7)
         b = simd.bit_and(b, bMask)
 
-        c := simd.bit_or(a, b)
-        invalid := simd.extract_lsbs(simd.lanes_eq(c, 0)) != nil
+        b = simd.bit_or(a, b)
+        invalid := simd.reduce_or(simd.lanes_eq(b, 0)) != 0
         if invalid {
             break
         }
 
-        b = simd.saturating_sub(bInsensitive, 96 - 10)
-        c = simd.bit_or(a, b)
-        c = simd.sub(c, 1)
+        b = simd.saturating_sub(data, 96 - 10)
+        b = simd.bit_or(a, b)
+        b = simd.sub(b, 1)
 
-        left := simd.shuffle(c, c, 0, 2, 4, 6, 8, 10, 12, 14)
+        left := simd.shuffle(b, b, 0, 2, 4, 6, 8, 10, 12, 14)
         left = simd.shl(left, 4)
-        right := simd.shuffle(c, c, 1, 3, 5, 7, 9, 11, 13, 15)
+        right := simd.shuffle(b, b, 1, 3, 5, 7, 9, 11, 13, 15)
 
         result := simd.bit_or(left, right)
         
-        resize(&sb.buf, len(sb.buf) + BYTES_PER_ITERATION/2)
-        simd.masked_store(&sb.buf[len(sb.buf) - BYTES_PER_ITERATION/2], result, #simd[BYTES_PER_ITERATION/2]bool{true, true, true, true, true, true, true, true})
+        #no_bounds_check {
+            resize(&sb.buf, len(sb.buf) + BYTES_PER_ITERATION/2)
+            simd.masked_store(&sb.buf[len(sb.buf) - BYTES_PER_ITERATION/2], result, #simd[BYTES_PER_ITERATION/2]bool{true, true, true, true, true, true, true, true})
+        }
     }
 
     // Last n <= 16 bytes
