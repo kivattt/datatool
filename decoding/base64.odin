@@ -33,8 +33,6 @@ b64_to_index :: proc(b: u8) -> int {
 	return -1
 }
 
-// TODO: Add a special case for the last 4 bytes, to handle '=' padding
-// Make sure to handle missing '=' padding aswell.
 base64_decode :: proc(lt: ^[256]int, bytes: []byte) -> ([dynamic]u8, Error) {
 	sb: strings.Builder
 	strings.builder_init_len_cap(&sb, 0, len(bytes) * (3 / 4))
