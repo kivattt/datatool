@@ -39,13 +39,13 @@ hex_decode :: proc(bytes: []byte) -> ([dynamic]u8, Error) {
         // TODO: Look into simd.clamp() or min + max functions
 
         // '0' through '9'
-        a := simd.saturating_sub(data, 47)
-        aMask := simd.lanes_lt(a, 11)
+        a := simd.saturating_sub(data, '0' - 1)
+        aMask := simd.lanes_lt(a, 10 + 1)
         a = simd.bit_and(a, aMask)
 
         // 'a' through 'f', case-insensitive
-        b := simd.saturating_sub(data, 96)
-        bMask := simd.lanes_lt(b, 7)
+        b := simd.saturating_sub(data, 'a' - 1)
+        bMask := simd.lanes_lt(b, 6 + 1)
         b = simd.bit_and(b, bMask)
 
         b = simd.bit_or(a, b)
@@ -54,7 +54,8 @@ hex_decode :: proc(bytes: []byte) -> ([dynamic]u8, Error) {
             break
         }
 
-        b = simd.saturating_sub(data, 96 - 10)
+        // Get the value of 'a' through 'f', starting at 11
+        b = simd.saturating_sub(data, 'a' - 11)
         b = simd.bit_or(a, b)
         b = simd.sub(b, 1)
 
