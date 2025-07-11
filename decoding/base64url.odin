@@ -4,19 +4,19 @@ import "core:fmt"
 import "core:strings"
 import "base:intrinsics"
 
-// TODO: Read through https://datatracker.ietf.org/doc/html/rfc4648.html
+// https://base64.guru/standards/base64url
 
 // FIXME: Don't do this at runtime...
-base64_new_lookup_table :: proc() -> [256]int {
+base64url_new_lookup_table :: proc() -> [256]int {
 	out: [256]int
 	for i := 0; i < 256; i += 1 {
-		out[i] = base64_to_index(u8(i))
+		out[i] = base64url_to_index(u8(i))
 	}
 	return out
 }
 
 @(private)
-base64_to_index :: proc(b: u8) -> int {
+base64url_to_index :: proc(b: u8) -> int {
 	switch b {
 	case 'A'..='Z':
 		return int(b - 'A')
@@ -24,16 +24,16 @@ base64_to_index :: proc(b: u8) -> int {
 		return int(b - 'a' + 26)
 	case '0'..='9':
 		return int(b - '0' + 52)
-	case '+':
+	case '-':
 		return 62
-	case '/':
+	case '_':
 		return 63
 	}
 
 	return -1
 }
 
-base64_decode :: proc(lt: ^[256]int, bytes: []byte) -> ([dynamic]u8, Error) {
+base64url_decode :: proc(lt: ^[256]int, bytes: []byte) -> ([dynamic]u8, Error) {
 	sb: strings.Builder
 	strings.builder_init_len_cap(&sb, 0, len(bytes) * (3 / 4))
 
@@ -62,19 +62,12 @@ base64_decode :: proc(lt: ^[256]int, bytes: []byte) -> ([dynamic]u8, Error) {
 	// Last n <= 4 bytes
 	remaining := min(4, len(bytes) - i)
 	
-	partial := false
-	notPartial := false
 	buffer: u8 = 0
 	nBitsUntilByte: u8 = 0
 	for j := 0; j < remaining; j += 1 {
 		byte := bytes[i + j]
 		index := lt[byte]
 		if index < 0 {
-			if byte == '=' {
-				notPartial = true
-			} else {
-				partial = true
- 			}
 			break
 		}
 		
@@ -92,21 +85,13 @@ base64_decode :: proc(lt: ^[256]int, bytes: []byte) -> ([dynamic]u8, Error) {
 		}
 	}
 	
-	if !notPartial && nBitsUntilByte != 0 {
-		partial = true
-	}
-	
 	if len(sb.buf) == 0 {
 		return nil, .Failed
 	} else {
-		if partial {
-			return sb.buf, .Partial_Decode
+		if buffer << (8 - nBitsUntilByte) == 0 {
+			return sb.buf, nil
 		} else {
-			if buffer << (8 - nBitsUntilByte) == 0 {
-				return sb.buf, nil
-			} else {
-				return sb.buf, .None_But_Nonstandard
-			}
+			return sb.buf, .None_But_Nonstandard
 		}
 	}
 }
