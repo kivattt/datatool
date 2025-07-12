@@ -7,6 +7,7 @@ import "core:simd"
 import "base:intrinsics"
 import slice "core:slice"
 
+@(private="file")
 BYTES_PER_ITERATION :: 16
 
 @(private)
@@ -67,7 +68,7 @@ hex_decode :: proc(bytes: []byte) -> ([dynamic]u8, Error) {
         
         #no_bounds_check {
             resize(&sb.buf, len(sb.buf) + BYTES_PER_ITERATION/2)
-            intrinsics.unaligned_store(cast(^#simd[8]u8)&sb.buf[len(sb.buf) - BYTES_PER_ITERATION/2], result)
+            intrinsics.unaligned_store(cast(^#simd[BYTES_PER_ITERATION/2]u8)&sb.buf[len(sb.buf) - BYTES_PER_ITERATION/2], result)
         }
     }
 
